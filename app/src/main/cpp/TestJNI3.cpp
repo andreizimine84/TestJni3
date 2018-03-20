@@ -19,7 +19,7 @@
 #define  LOG_TAG    "NSocket"
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
-#define  BUFFER_SIZE 2000
+#define  BUFFER_SIZE 1000
 
 int dataLengthRest = 0;
 int count = 0;
@@ -31,6 +31,8 @@ JNIEXPORT jstring JNICALL Java_com_testjni3_SelectAndShare_connectToHostJNICPP3(
 		JNIEnv *env, jobject obj, jstring fileName) {
 	char *buffer = ( char *) malloc(60);
 	char *bufferFin = ( char *) malloc(BUFFER_SIZE);
+	//char *buffer[60] = {0};
+	//char *bufferFin[BUFFER_SIZE] = {0};
 	if (buffer == NULL)
 		return NULL;
 	ssize_t bytes_read;
@@ -43,19 +45,22 @@ JNIEXPORT jstring JNICALL Java_com_testjni3_SelectAndShare_connectToHostJNICPP3(
 		return NULL;
 	}
     env->ReleaseStringUTFChars(fileName, name);
+	memset(buffer, 0, 60 * (sizeof buffer[0]) );
+	memset(bufferFin, 0, 1000 * (sizeof bufferFin[0]) );
 	while( fgets (buffer, 60, fd)!=NULL ) {
 		size_t len = strlen(buffer);
 		int totalSizeRead = len + strlen(bufferFin);
-		if (len > 0 && buffer[len-1] == '\n') {
-			buffer[--len] = '\0';
+		if (buffer[len - 1] == '\n') {
+			buffer[len - 1] = '!';
 		}
-		if(totalSizeRead < BUFFER_SIZE)
+		if(totalSizeRead < BUFFER_SIZE) {
 			strcat(bufferFin, buffer);
-		else {
+		}
+		else if (totalSizeRead > BUFFER_SIZE){
 			bufferFin = (char *) realloc(bufferFin, totalSizeRead + BUFFER_SIZE);
 		}
-	}
-	//buffer[totalSizeRead] = '\0';
+}
+
 	//fseek(fd, 0, SEEK_END);
 	//int sizeRead = ftell(fd);
 	//fseek(fd, 0, SEEK_SET);
@@ -66,6 +71,7 @@ JNIEXPORT jstring JNICALL Java_com_testjni3_SelectAndShare_connectToHostJNICPP3(
 		LOGD("Reading from file to buffer");
 
 		buffer = (char *) realloc(buffer, totalSizeRead + BUFFER_SIZE);
+
 		if (buffer == NULL)
 		{
 			free(buffer);
@@ -73,8 +79,11 @@ JNIEXPORT jstring JNICALL Java_com_testjni3_SelectAndShare_connectToHostJNICPP3(
 		}
 		totalSizeRead += (sizeRead = fread((buffer + totalSizeRead), 1, BUFFER_SIZE - 1, fd));
 	}
-	*/
-
+	for(int j = 0; j < strlen(buffer); j++){
+		if(buffer[j] == '\n')
+			buffer[j] = '\0';
+	}
+	buffer[totalSizeRead]='\0';*/
 	jstring jstrBuf = env->NewStringUTF(bufferFin);
 
 	fflush(fd);
